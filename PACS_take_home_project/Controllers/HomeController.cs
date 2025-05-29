@@ -1,32 +1,63 @@
-using System.Diagnostics;
+using System.Data;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using PACS_take_home_project.Models;
+using PACS_take_home_project.Services;
 
 namespace PACS_take_home_project.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly CSVDataService _csvDataService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(CSVDataService csvDataService)
         {
-            _logger = logger;
+            _csvDataService = csvDataService;
         }
 
         public IActionResult Index()
         {
-            return View();
-        }
+            var employeeList = _csvDataService.GetEmployees();
+            var timeEntries = _csvDataService.GetTimeEntries();
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+            var timeEntryTableList = employeeList
+                .Join(timeEntries, e => e.EmployeeID, t => t.EmployeeID, (e, t) => new { Name = $"{e.FirstName} {e.LastName}", t })
+                .Select(x => new TimeEntriesTableModel()
+                {
+                    Name = x.Name,
+                    Date = x.t.Date,
+                    InTime = x.t.InTime,
+                    OutTime = x.t.OutTime,
+                    TotalHours = Math.Round((x.t.OutTime - x.t.InTime).TotalMinutes / 60, 2)
+                })
+                .OrderByDescending(x => x.Date).ThenByDescending(x => x.OutTime);
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            DataTable table = new DataTable("Time Entries");
+
+            var columnsAdded = false;
+            foreach (var timeEntry in timeEntryTableList)
+            {
+                var row = table.NewRow();
+                foreach (var property in typeof(TimeEntriesTableModel).GetProperties())
+                {
+                    if (!columnsAdded)
+                    {
+                        table.Columns.Add(property.Name, property.PropertyType);
+                    }
+
+                    row[property.Name] = property.GetValue(timeEntry);
+                }
+                table.Rows.Add(row);
+                columnsAdded = true;
+            }
+
+            var model = new HomeViewModel()
+            {
+                TimeEntriesTable = table,
+                EmployeeModelList = employeeList,
+            };
+
+            return View(model);
         }
     }
 }

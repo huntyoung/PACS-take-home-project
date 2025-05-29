@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PACS_take_home_project")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1166f2775440c61b0298c9781c978f508e10fb6d")]
 [assembly: System.Reflection.AssemblyProductAttribute("PACS_take_home_project")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PACS_take_home_project")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

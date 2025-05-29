@@ -1,8 +1,29 @@
-﻿@{
+﻿@model HomeModel
+@using System.Data;
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="wrapper">
+    <table class="table">
+        <thead>
+            <tr>
+                @foreach(DataColumn column in Model.TimeEntriesTable.Columns)
+                {
+                    <th>@column.ColumnName</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (DataRow row in Model.TimeEntriesTable.Rows)
+            {
+                <tr>
+                    @foreach (DataColumn column in Model.TimeEntriesTable.Columns)
+                    {
+                        <td>@row[column.ColumnName].ToString()</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
