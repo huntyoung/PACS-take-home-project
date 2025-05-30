@@ -1,29 +1,129 @@
-﻿@model HomeModel
-@using System.Data;
+﻿@model HomeViewModel
 @{
     ViewData["Title"] = "Home Page";
 }
+<style>
+    label {
+        white-space: nowrap;
+    }
+    .form-group {
+        display: flex;
+        align-items: center;
+        width: 300px;
+    }
+    .form-group label {
+        margin-right: 10px;
+    }
+</style>
 
-<div class="wrapper">
-    <table class="table">
-        <thead>
-            <tr>
-                @foreach(DataColumn column in Model.TimeEntriesTable.Columns)
+<div class="table-header">
+    <h1>@Model.TimeEntriesTable.TableName</h1>
+    <div class="d-flex align-items-center justify-content-between">
+        <div class="filter-wrapper d-flex align-items-center">
+            <div>Filters:</div>
+            <select id="EmployeeSelect" class="form-select w-75" style="margin-left: 10px;">
+                <option selected>All Employees</option>
+                @foreach (var employee in Model.Employees)
                 {
-                    <th>@column.ColumnName</th>
+                    <option value="@employee.EmployeeID">@(employee.FirstName + " " + employee.LastName)</option>
                 }
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (DataRow row in Model.TimeEntriesTable.Rows)
-            {
-                <tr>
-                    @foreach (DataColumn column in Model.TimeEntriesTable.Columns)
-                    {
-                        <td>@row[column.ColumnName].ToString()</td>
-                    }
-                </tr>
-            }
-        </tbody>
-    </table>
+            </select>
+            <input id="DateSelect" class="form-control w-75" style="margin-left: 10px;" type="date" />
+        </div>
+        <div class="button-wrapper">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTimeEntryModal">
+                Add Time Entry
+            </button>
+        </div>
+    </div>
 </div>
+
+<!-- Report partial view -->
+@await Html.PartialAsync("~/Views/Partials/_Report.cshtml", Model.TimeEntriesTable)
+
+<!-- Add Time Entry Modal -->
+<div class="modal fade" id="addTimeEntryModal" tabindex="-1">
+    <div class="modal-dialog" style="max-width: 700px;">
+        <div class="modal-content">
+            <form id="TimeEntryModalForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Add Time Entry</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-center justify-content-around">
+                        <div class="form-group">
+                            <label for="EmployeeSelectModal">Employee:</label>
+                            <select id="EmployeeSelectModal" class="form-select" required>
+                                <option value="" selected>Select Employee</option>
+                                @foreach (var employee in Model.Employees)
+                                {
+                                    <option value="@employee.EmployeeID">@(employee.FirstName + " " + employee.LastName)</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="DateSelectModal">Date:</label>
+                            <input type="date" class="form-control" id="DateSelectModal" required />
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-around" style="margin-top: 10px;">
+                        <div class="form-group">
+                            <label for="InTimePicker">In time:</label>
+                            <input type="time" class="form-control" id="InTimeSelectModal" style="line-height: normal;" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="OutTimePicker">Out time:</label>
+                            <input type="time" class="form-control" id="OutTimeSelectModal" style="line-height: normal;" required />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Add Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#EmployeeSelect, #DateSelect').on('change', function () {
+                var postData = {
+                    employeeId: $('#EmployeeSelect').val(),
+                    date: $('#DateSelect').val()
+                };
+
+                $.post("@(Url.Action("FilterTableAjax", "Home"))", postData, function (data) {
+                    $('.table-wrapper').replaceWith(data);
+                });
+            });
+
+            $('#TimeEntryModalForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var postData = {
+                    EmployeeID: $('#EmployeeSelectModal').val(),
+                    Date: $('#DateSelectModal').val(),
+                    InTime: $('#InTimeSelectModal').val(),
+                    OutTime: $('#OutTimeSelectModal').val(),
+                    filteredEmployeeId: $('#EmployeeSelect').val(),
+                    filteredDate: $('#DateSelect').val()
+                };
+
+                $.post("@(Url.Action("InsertTimeEntryAjax", "Home"))", postData, function (data) {
+                    if (data.errorMessage) {
+                        alert(data.errorMessage);
+                    }
+                    else {
+                        $('.table-wrapper').replaceWith(data);
+                        $('.modal .btn-close').click();
+                        $('.modal input, .modal select').val('');
+                    }
+                });
+            });
+        });
+    </script>
+}

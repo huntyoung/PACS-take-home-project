@@ -1,6 +1,6 @@
 ﻿namespace PACS_take_home_project.Models
 {
-    public class TimeEntriesTableModel
+    public class TimeEntryTableModel
     {
         public string Name { get; set; }
         public DateOnly Date { get; set; }
